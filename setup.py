@@ -63,7 +63,6 @@ class CMakeBuild(build_ext):
             cmake_args += ['-DSAPIEN_CUDA=OFF']
 
         cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
-        build_args += ['--', '-j4']
 
         env = os.environ.copy()
         env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"'.format(env.get('CXXFLAGS', ''),
@@ -80,6 +79,13 @@ class CMakeBuild(build_ext):
             shutil.rmtree(vulkan_shader_path)
         assert os.path.exists(source_path)
         shutil.copytree(source_path, vulkan_shader_path)
+
+        vulkan_library_path = os.path.join(self.build_lib, 'sapien', 'vulkan_library')
+        source_path = os.path.join(ext.sourcedir, 'vulkan_library')
+        if os.path.exists(vulkan_library_path):
+            shutil.rmtree(vulkan_library_path)
+        assert os.path.exists(source_path)
+        shutil.copytree(source_path, vulkan_library_path)
 
         if not args.no_kuafu:
             kuafu_shader_path = os.path.join(self.build_lib, 'sapien', 'kuafu_assets', 'shaders')

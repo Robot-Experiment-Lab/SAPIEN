@@ -523,6 +523,17 @@ void buildSapien(py::module &m) {
                 "data"_a = py::make_tuple(reinterpret_cast<uintptr_t>(buffer.getCudaPtr()), false),
                 "version"_a = 2);
           })
+      .def(
+          "copy_to_host_async",
+          [](Renderer::server::VulkanCudaBuffer &buffer, py::array_t<float> array) {
+            auto data_ptr = buffer.getCudaPtr();
+            auto nbytes = buffer.getSize();
+            cudaMemcpyAsync(py::detail::array_proxy(array.ptr())->data, data_ptr, nbytes,
+                            cudaMemcpyDeviceToHost);
+          },
+          py::arg("array").noconvert())
+      .def("synchronize",
+           [](Renderer::server::VulkanCudaBuffer &buffer) { cudaStreamSynchronize(0); });
 #endif
       ;
 
@@ -2725,8 +2736,10 @@ Args:
   auto coacd = m.def_submodule("coacd");
 
   coacd.def("run_coacd", &sapien::CoACD, py::arg("mesh"), py::arg("threshold") = 0.05,
-        py::arg("preprocess") = true, py::arg("preprocess_resolution") = 30,
-        py::arg("pca") = false, py::arg("merge") = true, py::arg("mcts_max_depth") = 3,
-        py::arg("mcts_nodes") = 20, py::arg("mcts_iterations") = 150, py::arg("seed") = 0);
+            py::arg("preprocess") = true, py::arg("preprocess_resolution") = 30,
+            py::arg("pca") = false, py::arg("merge") = true, py::arg("mcts_max_depth") = 3,
+            py::arg("mcts_nodes") = 20, py::arg("mcts_iterations") = 150, py::arg("seed") = 0);
+  coacd.def("run_remesh", &sapien::Remesh, py::arg("mesh"), py::arg("resolution") = 30,
+            py::arg("level_set") = 0.55);
   coacd.def("set_log_level", &coacd::set_log_level, py::arg("level"));
 }
